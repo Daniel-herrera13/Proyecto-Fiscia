@@ -82,6 +82,7 @@ select{font:inherit;width:100%;padding:8px;border:1px solid var(--ink);border-ra
 <button class="main" id="bd">Descargar</button>
 <button id="bp">Pausar</button>
 <button id="bz">Reiniciar</button>
+<button class="wide" id="bs">Restablecer ajustes del modelo</button>
 <button class="danger wide" id="bo">Sobrecargar hasta que falle</button>
 <button class="wide" id="br">Guardar curva de referencia</button>
 </div>
@@ -129,7 +130,7 @@ function line(g,pts){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.mo
 function drawCircuit(){
  FK=c1.clientWidth<520?1.15:1;fit(c1,g1,H1);const g=g1;g.clearRect(0,0,W,H1);
  const ink=col('--ink'),mut=col('--muted'),pos=col('--pos'),neg=col('--neg'),plate=col('--plate'),cv=col('--curve'),rf=col('--ref');
- const gap=16+S.d*8,px=470,xl=px-gap/2,xr=px+gap/2,y0=60,y1=250,py0=100,py1=210;
+ const gap=24+(S.d-P().d[0])/(P().d[1]-P().d[0])*80,px=470,xl=px-gap/2,xr=px+gap/2,y0=60,y1=250,py0=100,py1=210;
  const Vc=S.q/C(),f=Math.min(1,Vc/12),dis=S.mode==='discharge';
  g.lineWidth=2.5;g.lineCap='round';g.lineJoin='round';g.strokeStyle=ink;g.fillStyle=ink;g.font='600 15px "Instrument Sans",sans-serif';
  line(g,[[70,y0],[150,y0]]);line(g,[[200,y0],[240,y0]]);line(g,[[330,y0],[xl,y0],[xl,py0]]);
@@ -156,7 +157,7 @@ function drawCircuit(){
  if(f>0.02&&gap>34){g.strokeStyle=cv;g.globalAlpha=Math.min(1,.15+f);g.lineWidth=1.6;for(let i=0;i<7;i++){const y=py0+14+i*13.7;line(g,[[xl+16,y],[xr-16,y]])}g.globalAlpha=1}
  // placas
  g.fillStyle=plate;g.fillRect(xl-8,py0,8,py1-py0);g.fillRect(xr,py0,8,py1-py0);
- const n=S.q>1e-13?Math.max(1,Math.round(18*Math.sqrt(S.q/QM))):0;
+ const n=S.q>1e-13?Math.max(1,Math.min(24,Math.round(18*Math.sqrt(S.q/QM)))):0;
  g.font='700 11px "Instrument Sans",sans-serif';g.textAlign='center';
  for(let i=0;i<n;i++){const y=py0+8+(i+.5)*((py1-py0-16)/n);
   g.fillStyle=pos;g.beginPath();g.arc(xl+7,y,4.2,0,7);g.fill();g.fillStyle='#fff';g.fillText('+',xl+7,y+3.5);
@@ -164,7 +165,7 @@ function drawCircuit(){
  // cota d
  g.strokeStyle=ref2(rf);g.lineWidth=1.5;line(g,[[xl,226],[xr,226]]);line(g,[[xl,220],[xl,232]]);line(g,[[xr,220],[xr,232]]);
  g.fillStyle=rf;g.font='600 15px "Instrument Sans",sans-serif';g.textAlign='left';
- g.fillText('d = '+S.d.toFixed(1)+' mm',xr+22,138);g.fillStyle=mut;g.fillText('A = '+S.A+' cm²',xr+22,158);g.fillText('Vc = '+fv(Vc),xr+22,178);
+ g.fillText('d = '+fd(S.d)+' mm',xr+22,138);g.fillStyle=mut;g.fillText('A = '+S.A+' cm²',xr+22,158);g.fillText('Vc = '+fv(Vc),xr+22,178);
 }
 function ref2(c){return c}
 function drawGraph(){
@@ -202,7 +203,7 @@ function readout(){
  $('rC').textContent=si(c,'F');$('rT').textContent=si(tau(),'s');$('rV').textContent=fv(v);$('rQ').textContent=si(S.q,'C');
  $('rP').textContent=Math.min(999,Math.round(v/S.V*100))+' %';$('rS').textContent=S.dead?'Dañado':({idle:'En pausa',charge:S.over?'Sobrecargando':'Cargando',discharge:'Descargando'}[S.mode]);$('ov').textContent=fv(S.V);
 }
-function labels(){$('od').textContent=S.d.toFixed(1)+' mm';$('oa').textContent=S.A+' cm²';$('ov').textContent=S.V+' V';$('or').textContent=S.R+' MΩ'}
+function labels(){$('od').textContent=fd(S.d)+' mm';$('oa').textContent=S.A+' cm²';$('ov').textContent=S.V+' V';$('or').textContent=S.R+' MΩ'}
 function start(m){if(S.dead)return;S.over=false;S.V=S.Vs;$('sv').value=S.Vs;S.mode=m;S.t=0;S.h=[[0,S.q/C()]]}
 [['sd','d'],['sa','A'],['sv','V'],['sr','R']].forEach(([id,k])=>$(id).addEventListener('input',e=>{S[k]=+e.target.value;labels()}));
 $('bc').onclick=()=>start('charge');$('bd').onclick=()=>start('discharge');
@@ -223,7 +224,7 @@ function fv(v){return v>=1000?(v/1000).toFixed(2)+' kV':v.toFixed(v<10?2:1)+' V'
 function msg(t){$('pm').textContent=t}
 function fail(){const v=S.q/C();S.dead={v};S.ft=0;S.mode='idle';S.over=false;S.cur=0;S.q=0;try{navigator.vibrate&&navigator.vibrate([200,80,300])}catch(e){}msg('Falló a '+fv(v)+'. '+MODELS[S.model].m+' Pulsa Reiniciar para poner un capacitor nuevo.')}
 $('sv').addEventListener('input',e=>{S.Vs=+e.target.value;S.over=false});
-$('sm').addEventListener('change',e=>{S.model=e.target.value;const m=MODELS[S.model];S.dead=null;S.over=false;S.q=0;S.mode='idle';S.cur=0;S.h=[];S.t=0;S.ft=0;S.Vs=Math.min(S.Vs,Math.floor(m.vr||12));S.V=S.Vs;$('sv').value=S.Vs;labels();$('md').textContent=m.t;$('pn').textContent='Vista del componente: '+m.n;msg('')});
+$('sm').addEventListener('change',e=>{S.model=e.target.value;const m=MODELS[S.model];S.dead=null;S.over=false;S.q=0;S.mode='idle';S.cur=0;S.h=[];S.t=0;S.ft=0;applyPre();$('md').textContent=m.t;$('pn').textContent='Vista del componente: '+m.n;msg('')});
 $('bo').onclick=()=>{if(S.dead)return;S.over=true;S.mode='charge';S.t=0;S.h=[[0,S.q/C()]];msg('Subiendo el voltaje de la fuente por encima del nominal. Si tarda mucho, baja R o aumenta el área.')};
 $('md').textContent=MODELS.ideal.t;
 const c3=$('c3'),g3=c3.getContext('2d');
@@ -276,6 +277,12 @@ function drawPart(){
 let FK=1;
 (function(){const d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'font');[g1,g2,g3].forEach(g=>Object.defineProperty(g,'font',{configurable:true,get(){return d.get.call(g)},set(v){d.set.call(g,String(v).replace(/([\d.]+)px/,(m,n)=>(n*FK)+'px'))}}))})();
 document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.act).click()));
+const PRE={ideal:{d:[1,10,.5,4],A:[100,500,20,300],V:[1,12,1,9],R:[10,100,5,50]},variable:{d:[.5,3,.5,1],A:[20,200,10,100],V:[1,12,1,9],R:[10,100,5,50]},ceramic:{d:[.1,1,.1,.3],A:[20,200,10,100],V:[5,80,5,25],R:[5,50,5,10]},electro:{d:[.5,5,.5,2],A:[200,1000,100,600],V:[2,24,1,9],R:[5,50,5,10]},film:{d:[.2,2,.2,.6],A:[100,600,50,300],V:[10,300,10,100],R:[5,50,5,10]},super:{d:[.1,1,.1,.3],A:[300,1000,100,500],V:[.5,4,.5,2],R:[1,20,1,2]}};
+function P(){return PRE[S.model]}
+function fd(v){return v<1?v.toFixed(2):v.toFixed(1)}
+function applyPre(){const p=P();[['sd','d'],['sa','A'],['sv','V'],['sr','R']].forEach(([id,k])=>{const e=$(id),a=p[k];e.min=a[0];e.max=a[1];e.step=a[2];e.value=a[3];S[k]=a[3]});S.Vs=S.V;labels()}
+$('bs').onclick=()=>{S.over=false;applyPre();if(!S.dead)msg('Ajustes restablecidos a los valores del modelo: '+MODELS[S.model].n+'.')};
+applyPre();
 labels();
 let prev=performance.now();
 function frame(now){const dt=Math.min(.05,(now-prev)/1000);prev=now;sim(dt);if(!S.dead&&S.q/C()>=failV())fail();S.phase+=S.cur*dt*90;if(S.dead)S.ft+=dt;drawCircuit();drawPart();drawGraph();readout();requestAnimationFrame(frame)}
