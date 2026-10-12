@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carga y descarga de un capacitor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#eef2f1;--ink:#14212e;--muted:#5b6b78;--panel:#fbfcfb;--line:#c9d3d6;--pos:#d2452f;--neg:#2467b3;--curve:#0f7a6b;--ref:#b8741a;--plate:#2b3a46;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a22;--ink:#e6eef2;--muted:#93a4b0;--panel:#16242e;--line:#2c3e4a;--pos:#ff7a62;--neg:#6fb0ff;--curve:#4fd1b8;--ref:#e5a24a;--plate:#b9c7d0}}
+:root[data-theme="dark"]{--bg:#0f1a22;--ink:#e6eef2;--muted:#93a4b0;--panel:#16242e;--line:#2c3e4a;--pos:#ff7a62;--neg:#6fb0ff;--curve:#4fd1b8;--ref:#e5a24a;--plate:#b9c7d0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px;color:var(--ink);font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.1;margin:8px 0 6px;font-weight:700;letter-spacing:-.02em}
+.sub{margin:0 0 18px;color:var(--muted);max-width:60ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card+.card{margin-top:16px}
+canvas{display:block;width:100%;height:auto}
+h2{font-size:1rem;margin:0 0 8px;font-weight:600}
+.ctl{margin:0 0 14px}
+.ctl label{display:flex;justify-content:space-between;font-weight:500;font-size:.95rem}
+.ctl output{font-variant-numeric:tabular-nums;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--curve);margin:6px 0 0}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 10px}
+button{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--ink);background:transparent;color:var(--ink);padding:10px 8px;cursor:pointer}
+button.main{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ref);outline-offset:2px}
+button.wide{grid-column:1/-1;border-color:var(--line)}
+dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+dl div{border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+dt{font-size:.8rem;color:var(--muted)}
+dd{margin:0;font-weight:600;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.note{font-size:.9rem;color:var(--muted);margin:10px 0 0}
+.formula{font-size:.95rem;margin:0}
+select{font:inherit;width:100%;padding:8px;border:1px solid var(--ink);border-radius:8px;background:var(--panel);color:var(--ink)}select:focus-visible{outline:3px solid var(--ref);outline-offset:2px}button.danger{background:var(--pos);border-color:var(--pos);color:#fff}button:disabled{opacity:.5;cursor:not-allowed}
+.types{margin-top:24px}.types h2{font-size:1.25rem}.types>p{margin:0 0 12px;color:var(--muted);max-width:70ch}.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.gal figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}.ill{display:block;width:100%;height:auto;max-height:150px}.ill .lead{stroke:var(--ink);stroke-width:3;stroke-linecap:round;fill:none}.ill .pl{fill:var(--plate)}.ill .fl{stroke:var(--curve);stroke-width:1.5;fill:none}.ill .e{fill:#2d5f9a}.ill .c{fill:#c9843a}.ill .f{fill:#d9b84a}.ill .s{fill:#3d4a55}.ill .st{fill:#c8d6e0}.ill .tx{font:600 9px "Instrument Sans",sans-serif;fill:#fff}.ill .tk{font:600 9px "Instrument Sans",sans-serif;fill:var(--ink)}.gal h3{margin:8px 0 2px;font-size:1rem}.gal figcaption p{margin:0 0 4px;font-size:.9rem;color:var(--muted)}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Carga y descarga de un capacitor</h1>
+<p class="sub">Cambia la distancia entre las placas, pulsa Cargar o Descargar y mira cómo cambia la rapidez del proceso.</p>
+<div class="grid">
+<div>
+<section class="card" aria-label="Circuito">
+<canvas id="c1" role="img" aria-label="Circuito con batería, interruptor, resistencia y un capacitor de placas paralelas"></canvas>
+</section>
+<section class="card" aria-label="Componente">
+<h2 id="pn">Vista del componente: Placas paralelas (aire)</h2>
+<canvas id="c3" role="img" aria-label="Vista exterior del capacitor elegido y medidor de voltaje frente a su límite"></canvas>
+<p class="note" id="pm" aria-live="polite"></p>
+<p class="note">Los voltajes nominales y de falla son valores de ejemplo. La capacitancia se calcula con C = ε₀·A/d para todos los modelos, para que la animación se vea igual de clara.</p>
+</section>
+<section class="card" aria-label="Gráfica">
+<h2>Voltaje del capacitor en el tiempo</h2>
+<canvas id="c2" role="img" aria-label="Gráfica del voltaje del capacitor contra el tiempo"></canvas>
+<p class="note">El tiempo está en cámara lenta (×1000) para poder verlo; la gráfica y los valores usan el tiempo real del circuito.</p>
+</section>
+</div>
+<aside>
+<section class="card" aria-label="Controles">
+<h2>Controles</h2>
+<div class="ctl"><label for="sm">Modelo de capacitor</label><select id="sm"><option value="ideal">Placas paralelas (aire)</option><option value="variable">Variable</option><option value="ceramic">Cerámico</option><option value="electro">Electrolítico</option><option value="film">De película</option><option value="super">Supercapacitor</option></select><p class="note" id="md"></p></div>
+<div class="ctl"><label for="sd">Distancia entre placas (d) <output id="od"></output></label><input id="sd" type="range" min="1" max="10" step="0.5" value="4"></div>
+<div class="ctl"><label for="sa">Área de las placas (A) <output id="oa"></output></label><input id="sa" type="range" min="100" max="500" step="20" value="300"></div>
+<div class="ctl"><label for="sv">Voltaje de la fuente (V₀) <output id="ov"></output></label><input id="sv" type="range" min="1" max="12" step="1" value="9"></div>
+<div class="ctl"><label for="sr">Resistencia (R) <output id="or"></output></label><input id="sr" type="range" min="10" max="100" step="5" value="50"></div>
+<div class="btns">
+<button class="main" id="bc">Cargar</button>
+<button class="main" id="bd">Descargar</button>
+<button id="bp">Pausar</button>
+<button id="bz">Reiniciar</button>
+<button class="danger wide" id="bo">Sobrecargar hasta que falle</button>
+<button class="wide" id="br">Guardar curva de referencia</button>
+</div>
+<dl>
+<div><dt>Capacitancia C</dt><dd id="rC"></dd></div>
+<div><dt>Constante τ = RC</dt><dd id="rT"></dd></div>
+<div><dt>Voltaje Vc</dt><dd id="rV"></dd></div>
+<div><dt>Carga Q</dt><dd id="rQ"></dd></div>
+<div><dt>Carga completa</dt><dd id="rP"></dd></div>
+<div><dt>Estado</dt><dd id="rS"></dd></div>
+</dl>
+<p class="note">Prueba esto: guarda la curva con d = 2 mm, aumenta d a 8 mm y vuelve a cargar. Con las placas más separadas, C baja y el capacitor se llena más rápido. Con el circuito en pausa, si separas las placas el voltaje sube porque la carga no tiene a dónde ir.</p>
+</section>
+<section class="card">
+<p class="formula"><strong>C = ε₀·A / d</strong><br>Carga: Vc = V₀(1 − e<sup>−t/RC</sup>)<br>Descarga: Vc = V₀·e<sup>−t/RC</sup></p>
+</section>
+</aside>
+</div>
+<section class="types" aria-label="Tipos de capacitores">
+<h2>Tipos de capacitores reales</h2>
+<p>Todos funcionan con el mismo principio, C = ε₀·κ·A / d: cambian el área de las placas, la distancia entre ellas y el material aislante (dieléctrico) que hay en medio.</p>
+<div class="gal">
+<figure><svg class="ill" viewBox="0 0 120 90" role="img" aria-label="Dos placas paralelas con líneas de campo"><path class="lead" d="M8 45H40M80 45H112"/><rect class="pl" x="40" y="14" width="7" height="62"/><rect class="pl" x="73" y="14" width="7" height="62"/><path class="fl" d="M50 26H70M50 38H70M50 50H70M50 62H70"/><text class="tk" x="28" y="30">+</text><text class="tk" x="86" y="30">−</text></svg><figcaption><h3>Placas paralelas</h3><p>El modelo ideal que simula esta app. Ayuda a entender la fórmula; en la práctica es de laboratorio.</p><p>Rango típico: pF</p></figcaption></figure>
+<figure><svg class="ill" viewBox="0 0 120 90" role="img" aria-label="Capacitor cerámico de disco"><path class="lead" d="M50 58V86M70 58V86"/><circle class="c" cx="60" cy="38" r="26"/><text class="tx" x="60" y="42" text-anchor="middle">104</text></svg><figcaption><h3>Cerámico</h3><p>Sin polaridad, pequeño y barato. Muy usado para filtrar ruido en circuitos y en alta frecuencia.</p><p>Rango típico: pF a µF</p></figcaption></figure>
+<figure><svg class="ill" viewBox="0 0 120 90" role="img" aria-label="Capacitor electrolítico cilíndrico con franja negativa"><path class="lead" d="M48 62V86M72 62V80"/><rect class="e" x="32" y="18" width="56" height="46" rx="4"/><rect class="st" x="32" y="18" width="14" height="46"/><text class="tk" x="39" y="45" text-anchor="middle">−</text><text class="tx" x="68" y="45" text-anchor="middle">1000µ</text></svg><figcaption><h3>Electrolítico</h3><p>Tiene polaridad: la franja marca el terminal negativo. Se usa en fuentes de poder para suavizar el voltaje.</p><p>Rango típico: µF a miles de µF</p></figcaption></figure>
+<figure><svg class="ill" viewBox="0 0 120 90" role="img" aria-label="Capacitor de película en caja rectangular"><path class="lead" d="M44 62V86M76 62V86"/><rect class="f" x="28" y="18" width="64" height="44" rx="4"/><text class="tk" x="60" y="44" text-anchor="middle">0.1µ 250V</text></svg><figcaption><h3>De película</h3><p>Sin polaridad y muy estable. Común en audio, temporizadores y filtros.</p><p>Rango típico: nF a µF</p></figcaption></figure>
+<figure><svg class="ill" viewBox="0 0 120 90" role="img" aria-label="Capacitor variable con placas entrelazadas y una flecha"><path class="lead" d="M8 30H34M86 60H112"/><path class="pl" d="M34 18h5v38h-5zM46 18h5v38h-5zM58 18h5v38h-5z"/><path class="pl" d="M40 28h5v40h-5zM52 28h5v40h-5zM64 28h5v40h-5zM76 28h5v40h-5z"/><path class="lead" d="M50 78l22-6" style="stroke-width:2"/><path class="fl" d="M44 80l-8 3l3-8"/></svg><figcaption><h3>Variable</h3><p>Girando una perilla cambia cuánto se enfrentan las placas, o sea el área A. Sirve para sintonizar radios.</p><p>Rango típico: pF</p></figcaption></figure>
+<figure><svg class="ill" viewBox="0 0 120 90" role="img" aria-label="Supercapacitor cilíndrico grande"><path class="lead" d="M46 70V86M74 70V86"/><rect class="s" x="28" y="12" width="64" height="58" rx="6"/><text class="tx" x="60" y="38" text-anchor="middle">2.7 V</text><text class="tx" x="60" y="52" text-anchor="middle">10 F</text></svg><figcaption><h3>Supercapacitor</h3><p>Guarda muchísima más carga que los demás pero a voltaje bajo. Sirve de respaldo de memoria o energía por segundos.</p><p>Rango típico: de 1 F a cientos de F</p></figcaption></figure>
+</div>
+</section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const E0=8.854e-12,SLOW=1000,QM=12*E0*0.05/0.001;
+const S={d:4,A:300,V:9,R:50,q:0,mode:'idle',t:0,h:[],ref:null,phase:0,cur:0};
+const C=()=>E0*S.A*1e-4/(S.d*1e-3);
+const tau=()=>S.R*1e6*C();
+function si(x,u,dg){dg=dg||3;if(!isFinite(x)||x===0)return '0 '+u;const p=[[1e-12,'p'],[1e-9,'n'],[1e-6,'µ'],[1e-3,'m'],[1,'']];const a=Math.abs(x);let b=p[0];for(const e of p)if(a>=e[0])b=e;return (x/b[0]).toPrecision(dg)+' '+b[1]+u}
+function col(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+const c1=$('c1'),c2=$('c2'),g1=c1.getContext('2d'),g2=c2.getContext('2d');
+const W=640,H1=300,H2=300;
+function fit(c,g,h){const dpr=window.devicePixelRatio||1,w=c.clientWidth||W,s=w/W;c.width=Math.round(w*dpr);c.height=Math.round(w*h/W*dpr);c.style.height=(w*h/W)+'px';g.setTransform(s*dpr,0,0,s*dpr,0,0)}
+function line(g,pts){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}
+function drawCircuit(){
+ fit(c1,g1,H1);const g=g1;g.clearRect(0,0,W,H1);
+ const ink=col('--ink'),mut=col('--muted'),pos=col('--pos'),neg=col('--neg'),plate=col('--plate'),cv=col('--curve'),rf=col('--ref');
+ const gap=16+S.d*8,px=470,xl=px-gap/2,xr=px+gap/2,y0=60,y1=250,py0=100,py1=210;
+ const Vc=S.q/C(),f=Math.min(1,Vc/12),dis=S.mode==='discharge';
+ g.lineWidth=2.5;g.lineCap='round';g.lineJoin='round';g.strokeStyle=ink;g.fillStyle=ink;g.font='600 15px "Instrument Sans",sans-serif';
+ line(g,[[70,y0],[150,y0]]);line(g,[[200,y0],[240,y0]]);line(g,[[330,y0],[xl,y0],[xl,py0]]);
+ line(g,[[xr,py1],[xr,y1],[70,y1],[70,165]]);line(g,[[70,y0],[70,120]]);
+ // resistencia
+ g.beginPath();g.moveTo(240,y0);for(let i=0;i<6;i++)g.lineTo(240+15*(i+.5),y0+(i%2?9:-9));g.lineTo(330,y0);g.stroke();
+ g.textAlign='center';g.fillStyle=mut;g.fillText('R = '+S.R+' MΩ',285,y0-20);
+ // batería
+ g.strokeStyle=dis?mut:ink;g.lineWidth=3;
+ [[120,30],[135,16],[150,30],[165,16]].forEach(b=>line(g,[[70-b[1]/2,b[0]],[70+b[1]/2,b[0]]]));
+ g.fillStyle=dis?mut:ink;g.textAlign='left';g.fillText('+',84,127);g.fillText(fv(S.V),84,152);
+ g.lineWidth=2.5;
+ // puente de descarga
+ if(dis){g.strokeStyle=rf;line(g,[[70,y0],[30,y0],[30,y1],[70,y1]]);g.fillStyle=rf;g.textAlign='center';g.fillText('puente',30,y0-12)}
+ // interruptor
+ g.strokeStyle=ink;g.fillStyle=ink;
+ [150,200].forEach(x=>{g.beginPath();g.arc(x,y0,4,0,7);g.fill()});
+ line(g,[[150,y0],S.mode==='idle'?[194,y0-26]:[196,y0]]);
+ g.fillStyle=mut;g.textAlign='center';g.fillText(S.mode==='idle'?'abierto':'cerrado',175,y0+24);
+ // corriente
+ if(Math.abs(S.cur)>0.01){g.fillStyle=cv;const L1=xl-100,L2=xr-70;for(let k=0;k<30;k++){const o=(((k*28+S.phase)%L1)+L1)%L1;if(100+o>xl-6)continue;g.beginPath();g.arc(100+o,y0,3.2,0,7);g.fill();
+  const o2=(((k*28+S.phase)%L2)+L2)%L2;if(xr-o2<76)continue;g.beginPath();g.arc(xr-o2,y1,3.2,0,7);g.fill()}}
+ // campo
+ if(f>0.02&&gap>34){g.strokeStyle=cv;g.globalAlpha=Math.min(1,.15+f);g.lineWidth=1.6;for(let i=0;i<7;i++){const y=py0+14+i*13.7;line(g,[[xl+16,y],[xr-16,y]])}g.globalAlpha=1}
+ // placas
+ g.fillStyle=plate;g.fillRect(xl-8,py0,8,py1-py0);g.fillRect(xr,py0,8,py1-py0);
+ const n=S.q>1e-13?Math.max(1,Math.round(18*Math.sqrt(S.q/QM))):0;
+ g.font='700 11px "Instrument Sans",sans-serif';g.textAlign='center';
+ for(let i=0;i<n;i++){const y=py0+8+(i+.5)*((py1-py0-16)/n);
+  g.fillStyle=pos;g.beginPath();g.arc(xl+7,y,4.2,0,7);g.fill();g.fillStyle='#fff';g.fillText('+',xl+7,y+3.5);
+  g.fillStyle=neg;g.beginPath();g.arc(xr-7,y,4.2,0,7);g.fill();g.fillStyle='#fff';g.fillText('−',xr-7,y+3.5)}
+ // cota d
+ g.strokeStyle=ref2(rf);g.lineWidth=1.5;line(g,[[xl,226],[xr,226]]);line(g,[[xl,220],[xl,232]]);line(g,[[xr,220],[xr,232]]);
+ g.fillStyle=rf;g.font='600 15px "Instrument Sans",sans-serif';g.textAlign='left';
+ g.fillText('d = '+S.d.toFixed(1)+' mm',xr+34,138);g.fillStyle=mut;g.fillText('A = '+S.A+' cm²',xr+34,158);g.fillText('Vc = '+fv(Vc),xr+34,178);
+}
+function ref2(c){return c}
+function drawGraph(){
+ fit(c2,g2,H2);const g=g2;g.clearRect(0,0,W,H2);
+ const ink=col('--ink'),mut=col('--muted'),ln=col('--line'),cv=col('--curve'),rf=col('--ref');
+ const L=58,R=16,T=16,B=40,pw=W-L-R,ph=H2-T-B;
+ const last=S.h.length?S.h[S.h.length-1][0]:0;
+ const tmax=Math.max(5*tau(),S.ref?5*S.ref.tau:0,last*1.05);
+ let hm=0;for(const p of S.h)if(p[1]>hm)hm=p[1];
+ const vmax=Math.max(S.V,S.ref?S.ref.V:0,hm);
+ const X=t=>L+t/tmax*pw,Y=v=>T+ph-v/vmax*ph;
+ g.font='13px "Instrument Sans",sans-serif';g.lineWidth=1;
+ for(let i=0;i<=4;i++){const v=vmax*i/4,y=Y(v);g.strokeStyle=ln;line(g,[[L,y],[W-R,y]]);g.fillStyle=mut;g.textAlign='right';g.fillText(v.toFixed(1),L-8,y+4)}
+ for(let i=0;i<=5;i++){const t=tmax*i/5,x=X(t);g.strokeStyle=ln;line(g,[[x,T],[x,T+ph]]);g.fillStyle=mut;g.textAlign='center';g.fillText(si(t,'s',2),x,T+ph+18)}
+ g.fillStyle=mut;g.textAlign='left';g.fillText('Vc (V)',L-48,T-4);g.textAlign='right';g.fillText('tiempo',W-R,H2-6);
+ g.strokeStyle=ink;g.lineWidth=2;line(g,[[L,T],[L,T+ph],[W-R,T+ph]]);
+ if(S.ref){g.strokeStyle=rf;g.lineWidth=2;g.setLineDash([6,5]);g.beginPath();for(let i=0;i<=120;i++){const t=tmax*i/120,v=S.ref.V*(1-Math.exp(-t/S.ref.tau));i?g.lineTo(X(t),Y(v)):g.moveTo(X(t),Y(v))}g.stroke();g.setLineDash([]);
+  g.fillStyle=rf;g.textAlign='right';g.fillText('referencia (d = '+S.ref.d+' mm)',W-R-6,T+16)}
+ const tx=X(tau());g.strokeStyle=mut;g.lineWidth=1;g.setLineDash([3,4]);line(g,[[tx,T],[tx,T+ph]]);g.setLineDash([]);g.fillStyle=mut;g.textAlign='left';g.fillText('τ',tx+4,T+ph-6);
+ if(S.h.length>1){g.strokeStyle=cv;g.lineWidth=3;g.beginPath();S.h.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();
+  const p=S.h[S.h.length-1];g.fillStyle=cv;g.beginPath();g.arc(X(p[0]),Y(p[1]),5,0,7);g.fill()}
+}
+function sim(dt){
+ if(S.dead)return;
+ if(S.over){S.V=Math.min(3*failV(),S.V+failV()/4*dt);S.mode='charge'}
+ if(S.mode==='idle')return;
+ const ph=dt/SLOW,R=S.R*1e6;let q=S.q;
+ const n=Math.min(300,Math.max(1,Math.ceil(ph/(R*C()/40)))),h=ph/n,ch=S.mode==='charge';
+ for(let i=0;i<n;i++){const c=C();q+=(ch?(S.V-q/c)/R:-q/(R*c))*h;if(q<0)q=0}
+ const c=C();S.cur=(ch?(S.V-q/c)/R:-q/(R*c))/(S.V/R);
+ S.q=q;S.t+=ph;S.h.push([S.t,q/c]);if(S.h.length>3000)S.h.shift();
+}
+function readout(){
+ const c=C(),v=S.q/c;
+ $('rC').textContent=si(c,'F');$('rT').textContent=si(tau(),'s');$('rV').textContent=fv(v);$('rQ').textContent=si(S.q,'C');
+ $('rP').textContent=Math.min(999,Math.round(v/S.V*100))+' %';$('rS').textContent=S.dead?'Dañado':({idle:'En pausa',charge:S.over?'Sobrecargando':'Cargando',discharge:'Descargando'}[S.mode]);$('ov').textContent=fv(S.V);
+}
+function labels(){$('od').textContent=S.d.toFixed(1)+' mm';$('oa').textContent=S.A+' cm²';$('ov').textContent=S.V+' V';$('or').textContent=S.R+' MΩ'}
+function start(m){if(S.dead)return;S.over=false;S.V=S.Vs;$('sv').value=S.Vs;S.mode=m;S.t=0;S.h=[[0,S.q/C()]]}
+[['sd','d'],['sa','A'],['sv','V'],['sr','R']].forEach(([id,k])=>$(id).addEventListener('input',e=>{S[k]=+e.target.value;labels()}));
+$('bc').onclick=()=>start('charge');$('bd').onclick=()=>start('discharge');
+$('bp').onclick=()=>{S.mode='idle';S.cur=0;S.over=false};
+$('bz').onclick=()=>{S.q=0;S.mode='idle';S.cur=0;S.h=[];S.t=0;S.dead=null;S.over=false;S.ft=0;S.V=S.Vs;$('sv').value=S.Vs;labels();msg('')};
+$('br').onclick=()=>{if(S.ref){S.ref=null;$('br').textContent='Guardar curva de referencia'}else{S.ref={tau:tau(),V:S.V,d:S.d};$('br').textContent='Quitar curva de referencia'}};
+Object.assign(S,{model:'ideal',Vs:9,over:false,dead:null,ft:0});
+const MODELS={
+ideal:{n:'Placas paralelas (aire)',vr:0,f:()=>3000*S.d,t:'Modelo ideal: dos placas con aire en medio. Aguanta hasta que salta una chispa, unos 3 kV por cada mm de separación.',m:'El aire entre las placas se ioniza y salta un arco eléctrico (ruptura dieléctrica). El capacitor se descarga de golpe y deja marcas quemadas.'},
+variable:{n:'Variable',vr:0,f:()=>1000*S.d,t:'Placas entrelazadas con aire. Con las placas muy juntas, un voltaje relativamente bajo ya puede hacer saltar una chispa.',m:'Salta un arco entre las placas entrelazadas. El metal se quema y queda en cortocircuito.'},
+ceramic:{n:'Cerámico',vr:50,f:()=>100,t:'Disco cerámico sin polaridad. Nominal de 50 V en este ejemplo.',m:'El cerámico se perfora y se agrieta. Por lo general queda en cortocircuito o se parte.'},
+electro:{n:'Electrolítico',vr:16,f:()=>20,t:'Cilíndrico y con polaridad. Nominal de 16 V en este ejemplo. Es de los que peor reaccionan a un exceso de voltaje.',m:'El electrolito se calienta, el gas infla la lata y se abre la válvula de seguridad. Puede soltar vapor y líquido.'},
+film:{n:'De película',vr:250,f:()=>500,t:'Caja rectangular sin polaridad. Nominal de 250 V en este ejemplo.',m:'La película se perfora en un punto, se calienta y quema el aislante. Sale humo y queda ennegrecido.'},
+super:{n:'Supercapacitor',vr:2.7,f:()=>3.2,t:'Mucha capacidad pero voltaje muy bajo: 2.7 V nominales. Pasarse unas décimas ya es peligroso.',m:'El electrolito se descompone y suelta gas: la celda se hincha y puede fugar líquido.'}
+};
+function failV(){return MODELS[S.model].f()}
+function fv(v){return v>=1000?(v/1000).toFixed(2)+' kV':v.toFixed(v<10?2:1)+' V'}
+function msg(t){$('pm').textContent=t}
+function fail(){const v=S.q/C();S.dead={v};S.ft=0;S.mode='idle';S.over=false;S.cur=0;S.q=0;msg('Falló a '+fv(v)+'. '+MODELS[S.model].m+' Pulsa Reiniciar para poner un capacitor nuevo.')}
+$('sv').addEventListener('input',e=>{S.Vs=+e.target.value;S.over=false});
+$('sm').addEventListener('change',e=>{S.model=e.target.value;const m=MODELS[S.model];S.dead=null;S.over=false;S.q=0;S.mode='idle';S.cur=0;S.h=[];S.t=0;S.ft=0;S.Vs=Math.min(S.Vs,Math.floor(m.vr||12));S.V=S.Vs;$('sv').value=S.Vs;labels();$('md').textContent=m.t;$('pn').textContent='Vista del componente: '+m.n;msg('')});
+$('bo').onclick=()=>{if(S.dead)return;S.over=true;S.mode='charge';S.t=0;S.h=[[0,S.q/C()]];msg('Subiendo el voltaje de la fuente por encima del nominal. Si tarda mucho, baja R o aumenta el área.')};
+$('md').textContent=MODELS.ideal.t;
+const c3=$('c3'),g3=c3.getContext('2d');
+function drawPart(){
+ fit(c3,g3,280);const g=g3;g.clearRect(0,0,W,280);
+ const ink=col('--ink'),mut=col('--muted'),cv=col('--curve'),pos=col('--pos'),plate=col('--plate');
+ const m=S.model,M=MODELS[m],lim=failV(),Vc=S.dead?0:S.q/C(),fr=S.dead?1:Math.min(1,Vc/lim),ft=S.dead?S.ft:0,st=Math.min(1,ft/1.2),T=performance.now()/1000;
+ g.save();g.translate(194,6);g.scale(2.1,2.1);
+ if(!S.dead&&fr>.8)g.translate(Math.sin(T*70)*.8,0);
+ g.lineCap='round';g.lineJoin='round';g.lineWidth=3;g.strokeStyle=ink;
+ const L=(a,b,c,d)=>{g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke()};
+ const R=(x,y,w,h,f,r)=>{g.fillStyle=f;g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,r||0);else g.rect(x,y,w,h);g.fill()};
+ const sm=(x,y,r,a,f)=>{g.globalAlpha=a;g.fillStyle=f;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.globalAlpha=1};
+ const tx=(s,x,y,f,c)=>{g.font=f;g.fillStyle=c;g.textAlign='center';g.fillText(s,x,y)};
+ if(m==='ideal'||m==='variable'){
+  if(m==='ideal'){L(8,45,40,45);L(80,45,112,45);R(40,14,7,62,plate);R(73,14,7,62,plate);
+   if(!S.dead&&fr>.02){g.strokeStyle=cv;g.globalAlpha=Math.min(1,.2+fr);g.lineWidth=1.5;[26,38,50,62].forEach(y=>L(50,y,70,y));g.globalAlpha=1}}
+  else{L(8,30,34,30);L(86,60,112,60);[34,46,58].forEach(x=>R(x,18,5,38,plate));[40,52,64,76].forEach(x=>R(x,28,5,40,plate))}
+  if(S.dead){if(ft<.35)sm(60,45,50*(1-ft/.35)+8,.6*(1-ft/.35),'#fff6c0');
+   if(ft<1.6){g.strokeStyle='#ffd23f';g.lineWidth=2.5;g.beginPath();g.moveTo(47,45);for(let i=1;i<7;i++)g.lineTo(47+i*26/7,45+Math.sin(ft*70+i*9)*10);g.lineTo(73,45);g.stroke()}
+   sm(46,45,4,.85,'#111');sm(74,45,4,.85,'#111')}
+ }else if(m==='ceramic'){
+  L(50,58,50,86);L(70,58,70,86);sm(60,38,26,1,S.dead?'#8a5a28':'#c9843a');tx('104',60,42,'600 9px sans-serif','#fff');
+  if(S.dead){g.strokeStyle='#1a1a1a';g.lineWidth=1.6;const P=[[52,14],[58,28],[53,38],[64,46],[60,56],[64,64]],n=Math.ceil(st*5);g.beginPath();g.moveTo(P[0][0],P[0][1]);for(let i=1;i<=n;i++)g.lineTo(P[i][0],P[i][1]);g.stroke();
+   g.save();g.translate(82,22+ft*40);g.rotate(ft*2);R(-5,-4,10,8,'#c9843a');g.restore()}
+ }else if(m==='electro'){
+  L(48,62,48,86);L(72,62,72,80);R(32,18,56,46,'#2d5f9a',4);R(32,18,14,46,'#c8d6e0');tx('−',39,45,'700 12px sans-serif',ink);tx('1000µ',68,45,'600 9px sans-serif','#fff');
+  if(S.dead){const b=st*14;g.fillStyle='#4f86c2';g.beginPath();g.moveTo(32,18);g.quadraticCurveTo(60,18-b*2.2,88,18);g.fill();
+   if(ft>.5)for(let i=0;i<12;i++){const a=(ft*1.1+i/12)%1;sm(60+Math.sin(i*5)*12*a,10-a*45,3+a*8,(1-a)*.55,'#b8c2cc')}
+   g.fillStyle='#5a3b1f';g.fillRect(36,64,Math.min(30,st*30),3)}
+ }else if(m==='film'){
+  L(44,62,44,86);L(76,62,76,86);R(28,18,64,44,'#d9b84a',4);tx('0.1µ 250V',60,44,'600 9px sans-serif','#1a1a1a');
+  if(S.dead){if(ft<.6)sm(60,40,30*(1-ft/.6)+6,.7*(1-ft/.6),'#ff7a30');sm(60,40,16*st,.85,'#1a1a1a');
+   for(let i=0;i<10;i++){const a=(ft*.9+i/10)%1;sm(54+Math.sin(i*3)*10+a*8,16-a*40,3+a*8,(1-a)*.55,'#6b6f73')}}
+ }else{
+  L(46,70,46,86);L(74,70,74,86);const w=S.dead?st*5:0;R(28-w,12,64+2*w,58,'#3d4a55',6);tx('2.7 V',60,38,'600 9px sans-serif','#fff');tx('10 F',60,52,'600 9px sans-serif','#fff');
+  if(S.dead){g.fillStyle='#5a3b1f';g.beginPath();g.ellipse(60,82,st*26,3,0,0,7);g.fill();
+   if(ft>.4)for(let i=0;i<10;i++){const a=(ft+i/10)%1;sm(60+Math.sin(i*4)*14*a,10-a*40,3+a*7,(1-a)*.5,'#b8c2cc')}}
+ }
+ g.restore();
+ const gx=60,gy=246,gw=520,gh=14,nf=M.vr?M.vr/lim:.7,zs=[[0,nf,'#2e9e6b'],[nf,1,'#e09a2b']];
+ g.font='600 14px Instrument Sans,sans-serif';g.fillStyle=mut;g.textAlign='left';g.fillText('Voltaje frente al límite',gx,gy-8);
+ g.textAlign='right';g.fillText(S.dead?'dañado':fv(Vc)+' de '+fv(lim),gx+gw,gy-8);
+ g.globalAlpha=.3;zs.forEach(z=>{g.fillStyle=z[2];g.fillRect(gx+z[0]*gw,gy,(z[1]-z[0])*gw,gh)});g.globalAlpha=1;
+ g.save();g.beginPath();g.rect(gx,gy,fr*gw,gh);g.clip();zs.forEach(z=>{g.fillStyle=(fr>.95&&z[0]>0)?pos:z[2];g.fillRect(gx+z[0]*gw,gy,(z[1]-z[0])*gw,gh)});g.restore();
+ g.fillStyle=mut;g.textAlign='left';
+ if(M.vr){g.fillRect(gx+nf*gw-1,gy-3,2,gh+6);g.textAlign='center';g.fillText('nominal '+fv(M.vr),gx+nf*gw,gy+gh+16)}
+ g.textAlign='right';g.fillText('falla',gx+gw,gy+gh+16);
+}
+labels();
+let prev=performance.now();
+function frame(now){const dt=Math.min(.05,(now-prev)/1000);prev=now;sim(dt);if(!S.dead&&S.q/C()>=failV())fail();S.phase+=S.cur*dt*90;if(S.dead)S.ft+=dt;drawCircuit();drawPart();drawGraph();readout();requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
